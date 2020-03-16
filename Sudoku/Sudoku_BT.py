@@ -73,35 +73,40 @@ class Sudoku(object):
         # Go through every row
         for r in range(0, 9):
             items = set()
+            keys_to_reduce = set()
             for c in range(0, 9):
                 if self.puzzle[r][c] != 0:
                     items.add(self.puzzle[r][c])
-            for x in range(0, 9):
-                if (r, x) in self.csp.unassigned_dict:
-                    self.csp.unassigned_dict[(r, x)].reduce_domain(items)
+                else:
+                    keys_to_reduce.add((r, c))
+            for key in keys_to_reduce:
+                self.csp.unassigned_dict[key].reduce_domain(items)
 
         # Go through every column
         for a in range(0, 9):
             items = set()
+            keys_to_reduce = set()
             for b in range(0, 9):
                 if self.puzzle[b][a] != 0:
                     items.add(self.puzzle[b][a])
-            for y in range(0, 9):
-                if (y, a) in self.csp.unassigned_dict:
-                    self.csp.unassigned_dict[(y, a)].reduce_domain(items)
+                else:
+                    keys_to_reduce.add((b, a))
+            for key in keys_to_reduce:
+                self.csp.unassigned_dict[key].reduce_domain(items)
 
         # Go through 3x3 grid
         for f in range(0, 7, 3):
             for g in range(0, 7, 3):
                 items = set()
+                keys_to_reduce = set()
                 for i in range(f, f + 3):
                     for j in range(g, g + 3):
                         if self.puzzle[i][j] != 0:
                             items.add(self.puzzle[i][j])
-                for i in range(f, f + 3):
-                    for j in range(g, g + 3):
-                        if (i, j) in self.csp.unassigned_dict:
-                            self.csp.unassigned_dict[(i, j)].reduce_domain(items)
+                        else:
+                            keys_to_reduce.add((i, j))
+                for key in keys_to_reduce:
+                    self.csp.unassigned_dict[key].reduce_domain(items)
 
     def solve(self):
 
@@ -111,11 +116,6 @@ class Sudoku(object):
 
         # self.ans is a list of lists
         return self.ans
-
-    # you may add more classes/functions if you think is useful
-    # However, ensure all the classes/functions are in this file ONLY
-    # Note that our evaluation scripts only call the solve method.
-    # Any other methods that you write should be used within the solve() method.
 
 if __name__ == "__main__":
     # STRICTLY do NOT modify the code in the main function here
