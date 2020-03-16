@@ -94,15 +94,16 @@ class Sudoku(object):
     # Use MRV Minimum Remaining Values Heuristic to select variable
     # Finding variable with the smallest domain
     # Returns Variable object corresponding to position with MRV
-    def select_unassigned_variable(self, csp):
+    def select_unassigned_variable(self):
         min_domain_size = 11
-        min_variable_key = next(iter(csp.unassigned_dict))
-        for key in csp.unassigned_dict:
-            curr_domain_size = len(csp.unassigned_dict[key].domain)
-            min_domain_size = curr_domain_size if min_domain_size > curr_domain_size else min_domain_size
-            min_variable_key = key if min_domain_size > curr_domain_size else min_variable_key
+        min_variable_key = (-1, -1)
+        for key in self.csp.unassigned_dict:
+            curr_domain_size = len(self.csp.unassigned_dict[key].domain)
+            if curr_domain_size <= min_domain_size:
+                min_domain_size = curr_domain_size
+                min_variable_key = key
 
-        mrv_variable = csp.unassigned_dict[min_variable_key]
+        mrv_variable = self.csp.unassigned_dict[min_variable_key]
         return mrv_variable
 
     # Inference is forward checking only, returns False if some domain reduced to empty set
@@ -165,8 +166,8 @@ class Sudoku(object):
             return assignment
 
         self.steps_taken += 1
-        print(str(self.steps_taken))
-        curr_var = self.select_unassigned_variable(csp)  # Returns a Variable object
+        curr_var = self.select_unassigned_variable()  # Returns a Variable object
+        print(curr_var.position_tuple)
         del csp.unassigned_dict[curr_var.position_tuple]
         # x is an integer value from domain of curr_var
         for x in curr_var.domain:  # No ordering established yet for choosing domain values
@@ -233,6 +234,11 @@ class Sudoku(object):
     def solve(self):
 
         self.initial_domain_reduction()
+
+        for key in self.csp.unassigned_dict:
+            print(str(key) + " " +str(len(self.csp.unassigned_dict[key].domain)))
+
+        print("START!")
 
         valid_assignment = self.backtrack_search(self.csp)
         for (i, j) in valid_assignment.assignment_dict:
