@@ -167,7 +167,7 @@ class Sudoku(object):
 
         self.steps_taken += 1
         curr_var = self.select_unassigned_variable()  # Returns a Variable object
-        print(curr_var.position_tuple)
+        # print(curr_var.position_tuple)
         del csp.unassigned_dict[curr_var.position_tuple]
         # x is an integer value from domain of curr_var
         for x in curr_var.domain:  # No ordering established yet for choosing domain values
@@ -235,10 +235,10 @@ class Sudoku(object):
 
         self.initial_domain_reduction()
 
-        for key in self.csp.unassigned_dict:
-            print(str(key) + " " +str(len(self.csp.unassigned_dict[key].domain)))
+        # for key in self.csp.unassigned_dict:
+        #     print(str(key) + " " +str(len(self.csp.unassigned_dict[key].domain)))
 
-        print("START!")
+        # print("START!")
 
         valid_assignment = self.backtrack_search(self.csp)
         for (i, j) in valid_assignment.assignment_dict:
