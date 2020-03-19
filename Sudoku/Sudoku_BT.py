@@ -127,6 +127,8 @@ class Sudoku(object):
 
         # forward check across same col
         for j in range(0, 9):
+            if failure_flag:
+                break
             if (j, var_col) in csp.unassigned_dict:
                 domain_to_reduce = csp.unassigned_dict[(j, var_col)].domain
                 if value in domain_to_reduce:
@@ -140,6 +142,8 @@ class Sudoku(object):
         temp = int(var_row / 3)
         temp2 = int(var_col / 3)
         for a in range(temp * 3, (temp + 1) * 3):
+            if failure_flag:
+                break
             for b in range(temp2 * 3, (temp2 + 1) * 3):
                 if (a, b) in csp.unassigned_dict:
                     domain_to_reduce = csp.unassigned_dict[(a, b)].domain
