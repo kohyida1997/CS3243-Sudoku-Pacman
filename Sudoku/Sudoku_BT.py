@@ -168,9 +168,8 @@ class Sudoku(object):
             return assignment
 
         self.steps_taken += 1
-        print(self.steps_taken)
+
         curr_var = self.select_unassigned_variable()  # Returns a Variable object
-        # print(curr_var.position_tuple)
         del csp.unassigned_dict[curr_var.position_tuple]
         # x is an integer value from domain of curr_var
         for x in curr_var.domain:  # No ordering established yet for choosing domain values
@@ -241,6 +240,7 @@ class Sudoku(object):
 
         # Actual backtracking
         valid_assignment = self.backtrack_search(self.csp)
+        print("Valid assignment found in " + str(self.steps_taken) + " steps.")
 
         # Writing assignment to self.ans for output
         for (i, j) in valid_assignment.assignment_dict:
