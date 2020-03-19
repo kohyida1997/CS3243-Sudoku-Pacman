@@ -9,7 +9,6 @@ class Variable(object):
     def __init__(self, position_tuple):
         self.position_tuple = position_tuple  # position is a tuple (i, j) representing i-j coordinates
         self.domain = set(range(1, 10))  # domain of variable is from 1..9 incl. initially
-        self.fixedValue = 0  # 0 indicates value is not fixed yet.
 
     # Remove all items in elements_to_remove (a set) from this variable's domain
     def reduce_domain(self, elements_to_remove):
@@ -29,7 +28,6 @@ class Assignment(object):
                     num_of_fixed_values += 1
                 self.assignment_dict[(i, j)] = curr_variable
         self.unassigned_count = 81 - num_of_fixed_values
-        # inferences_dict maps tuple (i, j) to (set of) ILLEGAL values associated with that (i, j) position
 
     def is_complete(self):
         return self.unassigned_count == 0
@@ -74,8 +72,8 @@ class Assignment(object):
 class CSP(object):
     def __init__(self, list_of_cells):
         self.unassigned_dict = dict()  # maps tuple (i, j) to a Variable object (of corresponding position)
-        for i in range(0, len(list_of_cells)):
-            for j in range(0, len(list_of_cells[0])):
+        for i in range(0, 9):
+            for j in range(0, 9):
                 if list_of_cells[i][j] == 0:  # 0 means unassigned initially, is a variable to consider
                     self.unassigned_dict[(i, j)] = Variable((i, j))
 
@@ -166,6 +164,7 @@ class Sudoku(object):
             return assignment
 
         self.steps_taken += 1
+        print(self.steps_taken)
         curr_var = self.select_unassigned_variable()  # Returns a Variable object
         # print(curr_var.position_tuple)
         del csp.unassigned_dict[curr_var.position_tuple]
@@ -233,14 +232,13 @@ class Sudoku(object):
 
     def solve(self):
 
+        # Pre-processing to reduce domains
         self.initial_domain_reduction()
 
-        # for key in self.csp.unassigned_dict:
-        #     print(str(key) + " " +str(len(self.csp.unassigned_dict[key].domain)))
-
-        # print("START!")
-
+        # Actual backtracking
         valid_assignment = self.backtrack_search(self.csp)
+
+        # Writing assignment to self.ans for output
         for (i, j) in valid_assignment.assignment_dict:
             self.ans[i][j] = valid_assignment.assignment_dict[(i, j)]
 
