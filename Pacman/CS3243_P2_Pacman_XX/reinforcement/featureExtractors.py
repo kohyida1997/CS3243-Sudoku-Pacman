@@ -101,14 +101,3 @@ class SimpleExtractor(FeatureExtractor):
             features["closest-food"] = float(dist) / (walls.width * walls.height)
         features.divideAll(10.0)
         return features
-
-class NewExtractor(FeatureExtractor):
-    """
-    Design you own feature extractor here. You may define other helper functions you find necessary.
-    """
-    def getFeatures(self, state, action):
-        "*** YOUR CODE HERE ***"
-        pass
-
-
-        
