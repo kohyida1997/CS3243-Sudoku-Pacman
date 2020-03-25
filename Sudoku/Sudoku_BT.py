@@ -1,10 +1,13 @@
 import sys
 import copy
 
-
 # Running script: given code can be run with the command:
 # python file.py, ./path/to/init_state.txt ./output/output.txt
 
+"""
+Represents a cell in the Sudoku Space.
+Maintains Domain of the Variable, its current coordiation position
+"""
 class Variable(object):
     def __init__(self, position_tuple):
         self.position_tuple = position_tuple  # position is a tuple (i, j) representing i-j coordinates
@@ -14,7 +17,21 @@ class Variable(object):
     def reduce_domain(self, elements_to_remove):
         self.domain = self.domain.difference(elements_to_remove)
 
+    def __lt__(self, other): #override less-than method
+        return len(self.domain) < len(other.domain)
 
+    def __gt__(self, other): #override greater-than method
+        return len(self.domain) > len(other.domain)
+
+    def __eq__(self, other):
+        return len(self.domain) == len(other.domain) 
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+"""
+Assignment represents the state of the current CSP assignment. 
+If number of unassigned variables = 0, it is complete
+"""
 class Assignment(object):
     def __init__(self, list_of_cells):
         self.assignment_dict = dict()  # maps tuple (i, j) to a value.
@@ -68,7 +85,10 @@ class Assignment(object):
 
         return True
 
-
+"""
+Encapsulates all variables that needs to be assigned
+Single Instance only - stored as an attribute in Sudoku Object
+"""
 class CSP(object):
     def __init__(self, list_of_cells):
         self.unassigned_dict = dict()  # maps tuple (i, j) to a Variable object (of corresponding position)
@@ -83,10 +103,10 @@ class CSP(object):
 
 class Sudoku(object):
     def __init__(self, puzzle):
-        self.puzzle = puzzle  # self.puzzle is a list of lists
-        self.ans = copy.deepcopy(puzzle)  # self.ans is a list of lists
+        self.puzzle = puzzle  # self.puzzle is a 2D List of Integers.
+        self.ans = copy.deepcopy(puzzle)  # self.ans is a 2D list of Integers. Will be returned to driver method for output
         self.assignment = Assignment(puzzle)  # initialize assignment based on given input
-        self.csp = CSP(puzzle)
+        self.csp = CSP(puzzle) #
         self.steps_taken = 0
 
     # Use MRV Minimum Remaining Values Heuristic to select variable
@@ -100,18 +120,16 @@ class Sudoku(object):
             if curr_domain_size <= min_domain_size:
                 min_domain_size = curr_domain_size
                 min_variable_key = key
-
+        
+        #Alternate method to get min_value: Warning: May perform worse, need more research
+        # min_variable_key_other = min(self.csp.unassigned_dict, key=self.csp.unassigned_dict.get)
         mrv_variable = self.csp.unassigned_dict[min_variable_key]
         return mrv_variable
 
     # Inference is forward checking only, returns False if some domain reduced to empty set
     def inference(self, csp, var, value):
-        var_position = var.position_tuple
-        var_row = var_position[0]
-        var_col = var_position[1]
-
+        var_row, var_col = var.position_tuple
         failure_flag = False
-
         set_of_tuples_with_value_removed = set()
 
         # forward check across same row
