@@ -7,7 +7,7 @@ Runner Script to easily test files
 """
 
 # File/Directory Variables
-solver_name = "Sudoku_BT.py"
+solver_name = "Sudoku_BT_MCV.py"
 test_dir = "public_tests_p2_sudoku"
 root_output_file = "output.out"
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
             file_int_num = int((file + "")[5:-4])
             output_file_name = "output{}.txt".format(file_int_num)
             output_file_dir = "{}/{}".format(test_dir, output_file_name)
-            command = "python Sudoku_BT.py {} {}".format(
+            command = "python Sudoku_BT_MCV.py {} {}".format(
                 dir_input_file, root_output_file)
             os.system(command)
 
