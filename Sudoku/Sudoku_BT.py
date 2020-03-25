@@ -1,6 +1,6 @@
 import sys
 import copy
-
+import random
 
 # Running script: given code can be run with the command:
 # python file.py, ./path/to/init_state.txt ./output/output.txt
@@ -9,7 +9,6 @@ class Variable(object):
     def __init__(self, position_tuple):
         self.position_tuple = position_tuple  # position is a tuple (i, j) representing i-j coordinates
         self.domain = set(range(1, 10))  # domain of variable is from 1..9 incl. initially
-        self.fixedValue = 0  # 0 indicates value is not fixed yet.
 
     # Remove all items in elements_to_remove (a set) from this variable's domain
     def reduce_domain(self, elements_to_remove):
@@ -29,7 +28,6 @@ class Assignment(object):
                     num_of_fixed_values += 1
                 self.assignment_dict[(i, j)] = curr_variable
         self.unassigned_count = 81 - num_of_fixed_values
-        # inferences_dict maps tuple (i, j) to (set of) ILLEGAL values associated with that (i, j) position
 
     def is_complete(self):
         return self.unassigned_count == 0
@@ -70,12 +68,39 @@ class Assignment(object):
 
         return True
 
+    def get_degree(self, position_tuple):
+        row_to_check = position_tuple[0]
+        col_to_check = position_tuple[1]
+        degree_count = 0
+
+        # Go through same row as position_tuple
+        for i in range(0, 9):
+            if i != col_to_check:
+                if self.assignment_dict[(row_to_check, i)] == 0:
+                    degree_count += 1
+
+        # Go through same col as position_tuple
+        for j in range(0, 9):
+            if j != row_to_check:
+                if self.assignment_dict[(j, col_to_check)] == 0:
+                    degree_count += 1
+
+        # Go through same 3x3 grid
+        temp = int(row_to_check / 3)
+        temp2 = int(col_to_check / 3)
+        for i in range(temp * 3, (temp + 1) * 3):
+            for j in range(temp2 * 3, (temp2 + 1) * 3):
+                if (i, j) != position_tuple:
+                    if self.assignment_dict[(i, j)] == 0:
+                        degree_count += 1
+
+        return degree_count
 
 class CSP(object):
     def __init__(self, list_of_cells):
         self.unassigned_dict = dict()  # maps tuple (i, j) to a Variable object (of corresponding position)
-        for i in range(0, len(list_of_cells)):
-            for j in range(0, len(list_of_cells[0])):
+        for i in range(0, 9):
+            for j in range(0, 9):
                 if list_of_cells[i][j] == 0:  # 0 means unassigned initially, is a variable to consider
                     self.unassigned_dict[(i, j)] = Variable((i, j))
 
@@ -99,9 +124,16 @@ class Sudoku(object):
         min_variable_key = (-1, -1)
         for key in self.csp.unassigned_dict:
             curr_domain_size = len(self.csp.unassigned_dict[key].domain)
-            if curr_domain_size <= min_domain_size:
+            if curr_domain_size < min_domain_size:
                 min_domain_size = curr_domain_size
                 min_variable_key = key
+
+            # Break tie if domain size is the same
+            if curr_domain_size == min_domain_size:
+                key_degree = self.assignment.get_degree(key)
+                min_var_degree = self.assignment.get_degree(min_variable_key)
+                if key_degree >= min_var_degree:
+                    min_variable_key = key
 
         mrv_variable = self.csp.unassigned_dict[min_variable_key]
         return mrv_variable
@@ -129,6 +161,8 @@ class Sudoku(object):
 
         # forward check across same col
         for j in range(0, 9):
+            if failure_flag:
+                break
             if (j, var_col) in csp.unassigned_dict:
                 domain_to_reduce = csp.unassigned_dict[(j, var_col)].domain
                 if value in domain_to_reduce:
@@ -142,6 +176,8 @@ class Sudoku(object):
         temp = int(var_row / 3)
         temp2 = int(var_col / 3)
         for a in range(temp * 3, (temp + 1) * 3):
+            if failure_flag:
+                break
             for b in range(temp2 * 3, (temp2 + 1) * 3):
                 if (a, b) in csp.unassigned_dict:
                     domain_to_reduce = csp.unassigned_dict[(a, b)].domain
@@ -166,8 +202,8 @@ class Sudoku(object):
             return assignment
 
         self.steps_taken += 1
+
         curr_var = self.select_unassigned_variable()  # Returns a Variable object
-        # print(curr_var.position_tuple)
         del csp.unassigned_dict[curr_var.position_tuple]
         # x is an integer value from domain of curr_var
         for x in curr_var.domain:  # No ordering established yet for choosing domain values
@@ -233,14 +269,14 @@ class Sudoku(object):
 
     def solve(self):
 
+        # Pre-processing to reduce domains
         self.initial_domain_reduction()
 
-        # for key in self.csp.unassigned_dict:
-        #     print(str(key) + " " +str(len(self.csp.unassigned_dict[key].domain)))
-
-        # print("START!")
-
+        # Actual backtracking
         valid_assignment = self.backtrack_search(self.csp)
+        print("Valid assignment found in " + str(self.steps_taken) + " steps.")
+
+        # Writing assignment to self.ans for output
         for (i, j) in valid_assignment.assignment_dict:
             self.ans[i][j] = valid_assignment.assignment_dict[(i, j)]
 
