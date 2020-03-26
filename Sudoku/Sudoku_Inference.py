@@ -128,8 +128,6 @@ class CSP(object):
         def create_arc_neighbour(current_tuple, neighbour_tuple):
             #neighbour is also unassigned, hence common arc
             if neighbour_tuple in self.unassigned_dict: 
-                if (neighbour_tuple == current_tuple):
-                    print("Fuck")
                 #add neighbours
                 curr_var = self.unassigned_dict[current_tuple]
                 neighbour_var = self.unassigned_dict[neighbour_tuple]
@@ -304,8 +302,7 @@ class Sudoku(object):
         self.csp.gen_binary_constraints()
         # Actual backtracking
         valid_assignment = self.backtrack_search(self.csp)
-        print("Valid assignment found in " + str(self.steps_taken) + " steps.")
-        print("Time Taken (in ms) for Valid Assignment = {}".format(time.time()*1000 - start_time))
+        print("Inference Variant: Time Taken (in ms) = {}, Steps = {}".format(time.time()*1000 - start_time, str(self.steps_taken)))
         
         # Writing assignment to self.ans for output
         for (i, j) in valid_assignment.assignment_dict:

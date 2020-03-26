@@ -236,19 +236,12 @@ class Sudoku(object):
         for x in curr_var.domain:  # No ordering established yet for choosing domain values
             if assignment.is_consistent_with(curr_var.position_tuple, x):
                 assignment.assign(curr_var.position_tuple, x)
-                inference = self.inference(csp, curr_var, x)
-                if inference != False:
-                    result = self.backtrack(assignment, csp)
-                    # SUCCESS SCENARIO
-                    if result != False:
-                        return result
-
-                    # Failure in one of the sub-trees, this x value is not chosen, undo domain reduction
-                    for (i, j) in inference:
-                        csp.unassigned_dict[(i, j)].domain.add(x)
-
-                assignment.reset(curr_var.position_tuple)
-        csp.unassigned_dict[curr_var.position_tuple] = curr_var
+                result = self.backtrack(assignment, csp)
+                if result != False:
+                    return result
+                else:
+                    assignment.reset(curr_var.position_tuple)
+                    csp.unassigned_dict[curr_var.position_tuple] = curr_var
         return False
 
     def backtrack_search(self, csp):
@@ -298,10 +291,10 @@ class Sudoku(object):
         start_time = time.time() * 1000
         # Pre-processing to reduce domains
         self.initial_domain_reduction()
-        self.csp.gen_binary_constraints()
         # Actual backtracking
         valid_assignment = self.backtrack_search(self.csp)
-        print("Super Variant: Time Taken (in ms) = {}, Steps = {}".format(time.time()*1000 - start_time, str(self.steps_taken)))
+        print("Variable Variant: Time Taken (in ms) = {}, Steps = {}".format(time.time()*1000 - start_time, str(self.steps_taken)))
+        # print("Valid assignment found in " + str(self.steps_taken) + " steps.")
 
         # Writing assignment to self.ans for output
         for (i, j) in valid_assignment.assignment_dict:
