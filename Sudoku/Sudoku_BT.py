@@ -1,5 +1,4 @@
-import sys
-import copy
+import sys, copy, time
 
 # Running script: given code can be run with the command:
 # python file.py, ./path/to/init_state.txt ./output/output.txt
@@ -12,10 +11,24 @@ class Variable(object):
     def __init__(self, position_tuple):
         self.position_tuple = position_tuple  # position is a tuple (i, j) representing i-j coordinates
         self.domain = set(range(1, 10))  # domain of variable is from 1..9 incl. initially
+        self.neighbours = set() #set of position_tuple(s) that it has arc consistency with (rows/cols/grid)
 
     # Remove all items in elements_to_remove (a set) from this variable's domain
     def reduce_domain(self, elements_to_remove):
         self.domain = self.domain.difference(elements_to_remove)
+    
+    #remove a value from the domain. Called by AC3
+    def remove_from_domain(self, value):
+        self.domain.remove(value)
+
+    def add_value_to_domain(self, value) :
+        self.domain.add(value)
+
+    def domain_empty(self):
+        return len(self.domain) == 0
+    
+    def add_neighbours(self, postion_tuple):
+        self.neighbours.add(postion_tuple)
 
     def __lt__(self, other): #override less-than method
         return len(self.domain) < len(other.domain)
@@ -28,6 +41,10 @@ class Variable(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __str__(self):
+        return str(self.position_tuple)
+
 """
 Assignment represents the state of the current CSP assignment. 
 If number of unassigned variables = 0, it is complete
@@ -100,6 +117,56 @@ class CSP(object):
     def size(self):
         return len(self.unassigned_dict)
 
+    def get_variable(self, position):
+        return self.unassigned_dict[position]
+    
+    """
+    Pre-processing Step to add 
+    """
+    def gen_binary_constraints(self):
+        #Create Arcs to add to constraint sets and neighbours to add to Variables
+        def create_arc_neighbour(current_tuple, neighbour_tuple):
+            #neighbour is also unassigned, hence common arc
+            if neighbour_tuple in self.unassigned_dict: 
+                if (neighbour_tuple == current_tuple):
+                    print("Fuck")
+                #add neighbours
+                curr_var = self.unassigned_dict[current_tuple]
+                neighbour_var = self.unassigned_dict[neighbour_tuple]
+                curr_var.add_neighbours(neighbour_tuple)
+                neighbour_var.add_neighbours(current_tuple)
+                
+        for (row, col) in self.unassigned_dict: #loop through all positions that are unassigned - they will have arcs
+            #Check through row
+            for i in range(0, 9):
+                if i != col:
+                    current_pos = (row, i)
+                    create_arc_neighbour((row, col), current_pos)
+            
+            #Check through columns
+            for j in range(0, 9):
+                if j != row:
+                    current_pos = (j, col)
+                    create_arc_neighbour((row, col), current_pos)
+
+            #Check through 3x3 grid
+            temp = int(row / 3)
+            temp2 = int(col / 3)
+            for i in range(temp * 3, (temp + 1) * 3):
+                for j in range(temp2 * 3, (temp2 + 1) * 3):
+                    current_pos = (i,j)
+                    if current_pos != (row, col):
+                        create_arc_neighbour((row, col), current_pos)
+
+
+    """
+    Returns a set of tuples representing the positions of the unassigned cells that have arcs with the given cell.
+    Called by AC-3 Algorithm
+    """
+    def get_neighbours_of_cell(self, cell):
+        neighbour_set = list()
+        return neighbour_set
+
 
 class Sudoku(object):
     def __init__(self, puzzle):
@@ -127,50 +194,28 @@ class Sudoku(object):
         return mrv_variable
 
     # Inference is forward checking only, returns False if some domain reduced to empty set
+    """
+    Inference is forward checking only. 
+    If some domain of its neighbour is reduced to an empty set, then current value to variable assignment is illegal,
+    will return false.
+    Else, will return the set of tuples of positions whose domains have their value removed
+    """
     def inference(self, csp, var, value):
-        var_row, var_col = var.position_tuple
         failure_flag = False
         set_of_tuples_with_value_removed = set()
 
-        # forward check across same row
-        for i in range(0, 9):
-            if (var_row, i) in csp.unassigned_dict:
-                domain_to_reduce = csp.unassigned_dict[(var_row, i)].domain
-                if value in domain_to_reduce:
-                    domain_to_reduce.remove(value)
-                    set_of_tuples_with_value_removed.add((var_row, i))
-                    if len(domain_to_reduce) == 0:
-                        failure_flag = True
-                        break
-
-        # forward check across same col
-        for j in range(0, 9):
+        for neighbour_position in var.neighbours:
             if failure_flag:
                 break
-            if (j, var_col) in csp.unassigned_dict:
-                domain_to_reduce = csp.unassigned_dict[(j, var_col)].domain
-                if value in domain_to_reduce:
-                    domain_to_reduce.remove(value)
-                    set_of_tuples_with_value_removed.add((j, var_col))
-                    if len(domain_to_reduce) == 0:
+            if neighbour_position in csp.unassigned_dict: #prevent loop through those neighbours already deleted
+                neighbour_var = csp.unassigned_dict[neighbour_position]
+                neighbours_domain = neighbour_var.domain #will potentially be reduced
+                if value in neighbours_domain:
+                    neighbour_var.remove_from_domain(value)
+                    set_of_tuples_with_value_removed.add(neighbour_position)
+                    if len(neighbours_domain) == 0:
                         failure_flag = True
                         break
-
-        # forward check within same 3x3 grid
-        temp = int(var_row / 3)
-        temp2 = int(var_col / 3)
-        for a in range(temp * 3, (temp + 1) * 3):
-            if failure_flag:
-                break
-            for b in range(temp2 * 3, (temp2 + 1) * 3):
-                if (a, b) in csp.unassigned_dict:
-                    domain_to_reduce = csp.unassigned_dict[(a, b)].domain
-                    if value in domain_to_reduce:
-                        domain_to_reduce.remove(value)
-                        set_of_tuples_with_value_removed.add((a, b))
-                        if len(domain_to_reduce) == 0:
-                            failure_flag = True
-                            break
 
         # If a failure is detected, backtrack and add back VALUE into any reduced domains
         if failure_flag:
@@ -252,14 +297,15 @@ class Sudoku(object):
                     self.csp.unassigned_dict[key].reduce_domain(items)
 
     def solve(self):
-
+        start_time = time.time() * 1000
         # Pre-processing to reduce domains
         self.initial_domain_reduction()
-
+        self.csp.gen_binary_constraints()
         # Actual backtracking
         valid_assignment = self.backtrack_search(self.csp)
         print("Valid assignment found in " + str(self.steps_taken) + " steps.")
-
+        print("Time Taken (in ms) for Valid Assignment = {}".format(time.time()*1000 - start_time))
+        
         # Writing assignment to self.ans for output
         for (i, j) in valid_assignment.assignment_dict:
             self.ans[i][j] = valid_assignment.assignment_dict[(i, j)]
