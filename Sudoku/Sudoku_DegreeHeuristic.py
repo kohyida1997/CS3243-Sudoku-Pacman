@@ -301,7 +301,7 @@ class Sudoku(object):
         self.csp.gen_binary_constraints()
         # Actual backtracking
         valid_assignment = self.backtrack_search(self.csp)
-        print("Super Variant: Time Taken (in ms) = {}, Steps = {}".format(time.time()*1000 - start_time, str(self.steps_taken)))
+        print("Inference + MRV + Degree Heuristic Variant: Time Taken (in ms) = {}, Steps = {}".format(time.time()*1000 - start_time, str(self.steps_taken)))
 
         # Writing assignment to self.ans for output
         for (i, j) in valid_assignment.assignment_dict:
