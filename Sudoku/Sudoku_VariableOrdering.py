@@ -102,41 +102,10 @@ class Assignment(object):
 
         return True
 
-<<<<<<< HEAD
-    def get_degree(self, position_tuple):
-        row_to_check = position_tuple[0]
-        col_to_check = position_tuple[1]
-        degree_count = 0
-
-        # Go through same row as position_tuple
-        for i in range(0, 9):
-            if i != col_to_check:
-                if self.assignment_dict[(row_to_check, i)] == 0:
-                    degree_count += 1
-
-        # Go through same col as position_tuple
-        for j in range(0, 9):
-            if j != row_to_check:
-                if self.assignment_dict[(j, col_to_check)] == 0:
-                    degree_count += 1
-
-        # Go through same 3x3 grid
-        temp = int(row_to_check / 3)
-        temp2 = int(col_to_check / 3)
-        for i in range(temp * 3, (temp + 1) * 3):
-            for j in range(temp2 * 3, (temp2 + 1) * 3):
-                if (i, j) != position_tuple:
-                    if self.assignment_dict[(i, j)] == 0:
-                        degree_count += 1
-
-        return degree_count
-
-=======
 """
 Encapsulates all variables that needs to be assigned
 Single Instance only - stored as an attribute in Sudoku Object
 """
->>>>>>> d7368a5dae699808a4a9ee79eef740f6d452c1e0
 class CSP(object):
     def __init__(self, list_of_cells):
         self.unassigned_dict = dict()  # maps tuple (i, j) to a Variable object (of corresponding position)
@@ -213,23 +182,12 @@ class Sudoku(object):
         min_variable_key = (-1, -1)
         for key in self.csp.unassigned_dict:
             curr_domain_size = len(self.csp.unassigned_dict[key].domain)
-            if curr_domain_size < min_domain_size:
+            if curr_domain_size <= min_domain_size:
                 min_domain_size = curr_domain_size
                 min_variable_key = key
-<<<<<<< HEAD
-
-            # Break tie if domain size is the same
-            if curr_domain_size == min_domain_size:
-                key_degree = self.assignment.get_degree(key)
-                min_var_degree = self.assignment.get_degree(min_variable_key)
-                if key_degree >= min_var_degree:
-                    min_variable_key = key
-
-=======
         
         #Alternate method to get min_value: Warning: May perform worse, need more research
         # min_variable_key_other = min(self.csp.unassigned_dict, key=self.csp.unassigned_dict.get)
->>>>>>> d7368a5dae699808a4a9ee79eef740f6d452c1e0
         mrv_variable = self.csp.unassigned_dict[min_variable_key]
         return mrv_variable
 
@@ -278,19 +236,12 @@ class Sudoku(object):
         for x in curr_var.domain:  # No ordering established yet for choosing domain values
             if assignment.is_consistent_with(curr_var.position_tuple, x):
                 assignment.assign(curr_var.position_tuple, x)
-                inference = self.inference(csp, curr_var, x)
-                if inference != False:
-                    result = self.backtrack(assignment, csp)
-                    # SUCCESS SCENARIO
-                    if result != False:
-                        return result
-
-                    # Failure in one of the sub-trees, this x value is not chosen, undo domain reduction
-                    for (i, j) in inference:
-                        csp.unassigned_dict[(i, j)].domain.add(x)
-
-                assignment.reset(curr_var.position_tuple)
-        csp.unassigned_dict[curr_var.position_tuple] = curr_var
+                result = self.backtrack(assignment, csp)
+                if result != False:
+                    return result
+                else:
+                    assignment.reset(curr_var.position_tuple)
+                    csp.unassigned_dict[curr_var.position_tuple] = curr_var
         return False
 
     def backtrack_search(self, csp):
@@ -340,10 +291,10 @@ class Sudoku(object):
         start_time = time.time() * 1000
         # Pre-processing to reduce domains
         self.initial_domain_reduction()
-        self.csp.gen_binary_constraints()
         # Actual backtracking
         valid_assignment = self.backtrack_search(self.csp)
-        print("Super Variant: Time Taken (in ms) = {}, Steps = {}".format(time.time()*1000 - start_time, str(self.steps_taken)))
+        print("Variable Variant: Time Taken (in ms) = {}, Steps = {}".format(time.time()*1000 - start_time, str(self.steps_taken)))
+        # print("Valid assignment found in " + str(self.steps_taken) + " steps.")
 
         # Writing assignment to self.ans for output
         for (i, j) in valid_assignment.assignment_dict:
