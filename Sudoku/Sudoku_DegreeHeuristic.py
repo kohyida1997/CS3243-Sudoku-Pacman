@@ -201,6 +201,7 @@ class Sudoku(object):
         self.assignment = Assignment(puzzle)  # initialize assignment based on given input
         self.csp = CSP(puzzle) #
         self.steps_taken = 0
+        self.time_taken = 0
 
     # Use MRV Minimum Remaining Values Heuristic to select variable
     # Finding variable with the smallest domain
@@ -328,13 +329,14 @@ class Sudoku(object):
                     self.csp.unassigned_dict[key].reduce_domain(items)
 
     def solve(self):
-        start_time = time.time() * 1000
+        start_time = time.time()
         # Pre-processing to reduce domains
         self.initial_domain_reduction()
         self.csp.gen_binary_constraints()
         # Actual backtracking
         valid_assignment = self.backtrack_search(self.csp)
-        print("Inference + MRV + Degree Heuristic Variant: Time Taken (in ms) = {}, Steps = {}".format(time.time()*1000 - start_time, str(self.steps_taken)))
+        self.time_taken = (time.time() - start_time) * 1000
+        print("Inference + MRV + Degree Heuristic Variant: Time Taken (in ms) = {}, Steps = {}".format(self.time_taken, str(self.steps_taken)))
 
         # Writing assignment to self.ans for output
         for (i, j) in valid_assignment.assignment_dict:
