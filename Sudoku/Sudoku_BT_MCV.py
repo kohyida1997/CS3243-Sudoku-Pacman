@@ -80,22 +80,28 @@ class Assignment(object):
             if i != col_to_check:
                 if self.assignment_dict[(row_to_check, i)] == 0:
                     count += 1
-
+        
+        #if row_to_check == 0 and col_to_check == 8:
+            #print("num of 0 in same row: %d" % (count))
         # Go through same col as position_tuple
         for j in range(0, 9):
             if j != row_to_check:
                 if self.assignment_dict[(j, col_to_check)] == 0:
                     count += 1
-
+        #if row_to_check == 0 and col_to_check == 8:
+            #print("num of 0 in same row+col: %d" % (count))
         # Go through same 3x3 grid
         temp = int(row_to_check / 3)
         temp2 = int(col_to_check / 3)
         for i in range(temp * 3, (temp + 1) * 3):
             for j in range(temp2 * 3, (temp2 + 1) * 3):
-                if (i, j) != position_tuple and i != row_to_check and j != col_to_check:
+                if i != row_to_check and j != col_to_check:
                     if self.assignment_dict[(i, j)] == 0:
-                       count += 1 
-
+                        #if row_to_check == 0 and col_to_check == 8:
+                            #print("checking inner square: %d, %d" % (i, j))
+                        count += 1 
+        #if row_to_check == 0 and col_to_check == 8:
+            #print("num of 0 in same row+col+sq: %d" % (count))
         return count
 
 class CSP(object):
@@ -136,16 +142,17 @@ class Sudoku(object):
     # Use MCV Most Constraining Variable Heuristic to select variable
     # Finding variable with the most constraints on remaining unassigned variables
     # Returns Variable object corresponding to position with MCV
-    def select_unassigned_variable_mcv(self, assignment):
+    def select_unassigned_variable_mcv(self):
         most_constraint_num = 0
         mcv_variable_key = (-1, -1)
         for key in self.csp.unassigned_dict:
-            curr_constraint_num = assignment.get_constraint_num(key)
+            curr_constraint_num = self.assignment.get_constraint_num(key)
             if curr_constraint_num > most_constraint_num:
+                #if key[0] == 0 and key[1] == 8:
+                    #print("constraint num updated from %d to %d" % (most_constraint_num, curr_constraint_num))
                 most_constraint_num = curr_constraint_num
                 mcv_variable_key = key
         mcv_variable = self.csp.unassigned_dict[mcv_variable_key]
-        print(curr_constraint_num)
         return mcv_variable
 
     # Inference is forward checking only, returns False if some domain reduced to empty set
@@ -208,8 +215,8 @@ class Sudoku(object):
             return assignment
 
         self.steps_taken += 1
-        curr_var = self.select_unassigned_variable_mcv(assignment)  # Returns a Variable object
-        print(curr_var.position_tuple)
+        curr_var = self.select_unassigned_variable_mcv()  # Returns a Variable object
+        #print(curr_var.position_tuple)
         del csp.unassigned_dict[curr_var.position_tuple]
         # x is an integer value from domain of curr_var
         for x in curr_var.domain:  # No ordering established yet for choosing domain values
