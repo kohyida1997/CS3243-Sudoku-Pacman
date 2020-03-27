@@ -229,11 +229,45 @@ class Sudoku(object):
             return assignment
 
         self.steps_taken += 1
-
         curr_var = self.select_unassigned_variable()  # Returns a Variable object
         del csp.unassigned_dict[curr_var.position_tuple]
+
+        # Counting how constraining a certain value is
+        def count_collisions(x):
+            count = 0
+            curr_row, curr_col = curr_var.position_tuple
+
+            # check row
+            for i in range(0, 9):
+                if (curr_row, i) in self.csp.unassigned_dict:
+                    var = self.csp.unassigned_dict[(curr_row, i)]
+                    if x in var.domain:
+                        count += 1
+
+            # check col
+            for j in range(0, 9):
+                if (j, curr_col) in self.csp.unassigned_dict:
+                    var = self.csp.unassigned_dict[(j, curr_col)]
+                    if x in var.domain:
+                        count += 1
+
+            # check 3x3 grid
+            temp = int(curr_row / 3)
+            temp2 = int(curr_col / 3)
+            for a in range(temp * 3, (temp + 1) * 3):
+                for b in range(temp2 * 3, (temp2 + 1) * 3):
+                    if (a, b) in self.csp.unassigned_dict:
+                        var = self.csp.unassigned_dict[(a, b)]
+                        if x in var.domain:
+                            count += 1
+
+            return count
+
+        # Creating order for domain values
+        ordered_values = sorted(list(curr_var.domain), key=count_collisions)
+
         # x is an integer value from domain of curr_var
-        for x in curr_var.domain:  # No ordering established yet for choosing domain values
+        for x in ordered_values:  # No ordering established yet for choosing domain values
             if assignment.is_consistent_with(curr_var.position_tuple, x):
                 assignment.assign(curr_var.position_tuple, x)
                 inference = self.inference(csp, curr_var, x)
