@@ -22,10 +22,8 @@ test_dir = "public_tests_p2_sudoku"
 root_output_file = "output.out"
 
 solver_file_names = {
-    1: "Sudoku_BT.py",
+    1: "Sudoku_DegreeHeuristic.py",
     2: "Sudoku_ValueOrdering.py",
-    3: "Sudoku_VariableOrdering.py",
-    4: "Sudoku_Inference.py"
 }
 
 """
