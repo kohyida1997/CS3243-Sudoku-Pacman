@@ -337,7 +337,7 @@ class Sudoku(object):
         # Actual backtracking
         valid_assignment = self.backtrack_search(self.csp)
         self.time_taken = (time.time() - start_time) * 1000
-        print("Inference + MRV + Value Ordering Variant: Time Taken (in ms) = {}, Steps = {}".format(self.time_taken, str(self.steps_taken)))
+        print("Inference + MRV + Value Ordering Variant: Time Taken (in ms) = {0}, Steps = {1}".format(self.time_taken, str(self.steps_taken)))
 
         # Writing assignment to self.ans for output
         for (i, j) in valid_assignment.assignment_dict:
