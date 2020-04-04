@@ -1,0 +1,5 @@
+Test File Name,Number of Blank Cells,Time Taken (DH Variant),Steps Taken (DH Variant),Time Taken (VO Variant),Steps Taken (VO Variant)
+input1.txt,60,113.00,869,119.00,3772
+input2.txt,56,74.00,556,16.00,495
+input3.txt,51,7.00,51,2.00,51
+input4.txt,50,11.00,74,3.00,65

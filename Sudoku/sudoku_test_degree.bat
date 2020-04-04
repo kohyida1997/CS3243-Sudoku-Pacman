@@ -6,10 +6,10 @@ del out3.txt
 del out4.txt
 PAUSE
 echo -----Running test program-----
-python3 Sudoku_BT.py input1.txt out1.txt
-python3 Sudoku_BT.py input2.txt out2.txt
-python3 Sudoku_BT.py input3.txt out3.txt
-python3 Sudoku_BT.py input4.txt out4.txt
+python Sudoku_DegreeHeuristic.py input1.txt out1.txt
+python Sudoku_DegreeHeuristic.py input2.txt out2.txt
+python Sudoku_DegreeHeuristic.py input3.txt out3.txt
+python Sudoku_DegreeHeuristic.py input4.txt out4.txt
 cls
 echo -----Checking for Output Diffs-----
 fc out1.txt output1.txt
