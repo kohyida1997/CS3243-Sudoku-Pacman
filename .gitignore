@@ -1,5 +1,5 @@
 .idea
-Sudoku/Testing.py
-Sudoku/*.txt
 Pacman/CS3243_P2_Pacman_XX/reinforcement/qlearningTest.py
 *.out
+*.csv
+*.pyc
