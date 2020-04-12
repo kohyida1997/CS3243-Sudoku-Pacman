@@ -67,6 +67,60 @@ def closestFood(pos, food, walls):
     # no food found
     return None
 
+def closestCapsule(pos, capsuleList, walls):
+    fringe = [(pos[0], pos[1], 0)]
+    expanded = set()
+    while fringe:
+        pos_x, pos_y, dist = fringe.pop(0)
+        if (pos_x, pos_y) in expanded:
+            continue
+        expanded.add((pos_x, pos_y))
+
+        # if we find a food at this location then exit
+        capsuleFound = False
+        for c in capsuleList:
+            if c == (pos_x, pos_y): 
+                capsuleFound = True
+                break
+
+        if capsuleFound:
+            return dist
+        
+        # otherwise spread out from the location to its neighbours
+        nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
+        for nbr_x, nbr_y in nbrs:
+            fringe.append((nbr_x, nbr_y, dist + 1))
+    # no capsule found
+    return None
+
+def closestGhost(pos, ghostPosList, walls):
+    """
+    Find the distance to the closest ghost. Can take list_pos of active or scared ghosts.
+    """
+    fringe = [(pos[0], pos[1], 0)]
+    expanded = set()
+    while fringe:
+        pos_x, pos_y, dist = fringe.pop(0)
+        if (pos_x, pos_y) in expanded:
+            continue
+        expanded.add((pos_x, pos_y))
+
+        # if we find a food at this location then exit
+        ghostFound = False
+        for g in ghostPosList:
+            if g == (pos_x, pos_y):
+                ghostFound = True
+                break
+
+        if ghostFound:
+            return dist
+        
+        # otherwise spread out from the location to its neighbours
+        nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
+        for nbr_x, nbr_y in nbrs:
+            fringe.append((nbr_x, nbr_y, dist + 1))
+    # no scared ghost found found
+    return None
 
 class SimpleExtractor(FeatureExtractor):
     """
@@ -114,11 +168,47 @@ class NewExtractor(FeatureExtractor):
     Design you own feature extractor here. You may define other helper functions you find necessary.
     """
 
+    """
+    Recursive function that finds all legal neighbours n distance away. Similar to BFS
+    """
+    def getLegalNeighbours(self, frontier_list, walls, n):
+        # positions_two_steps_away = Actions.getLegalNeighbors((next_x, next_y), walls)
+        if n == 0:
+            return frontier_list
+        else:
+            new_frontier_list = []
+            for pos in frontier_list:
+                neighbours = Actions.getLegalNeighbors(pos, walls)
+                new_frontier_list.extend(neighbours)
+            return self.getLegalNeighbours(new_frontier_list, walls, n-1)
+    
+    """
+    Returns a 2-Element Tuple of ActiveGhostList positions and ScaredGhostList positions
+    """
+    def getGhostPositions(self, ghost_states, ghost_pos):
+        active_ghost_pos = []
+        scared_ghosts_pos = []
+
+        #record positions of active and scared ghosts
+        for index, state in enumerate(ghost_states):
+            if state.scaredTimer > 0: 
+                scared_ghosts_pos.append(ghost_pos[index])
+            else:
+                active_ghost_pos.append(ghost_pos[index])
+        
+        return active_ghost_pos, scared_ghosts_pos
+
+
     def getFeatures(self, state, action):
+        #Initialize helper variables
         food = state.getFood()
         walls = state.getWalls()
-        ghost_states = state.getGhostStates()
         capsules = state.getCapsules()
+        
+        #ghosts
+        ghost_states = state.getGhostStates()
+        ghosts_pos = state.getGhostPositions()
+        active_ghosts_pos, scared_ghosts_pos = self.getGhostPositions(ghost_states, ghosts_pos)
 
         features = util.Counter()
 
@@ -130,22 +220,22 @@ class NewExtractor(FeatureExtractor):
         next_x, next_y = int(x + dx), int(y + dy)
 
         positions_two_steps_away = Actions.getLegalNeighbors((next_x, next_y), walls)
+        # positions_two_steps_away = self.getLegalNeighbours([(x, y)],walls, 2) #inconclusive evidence it may be better than above
 
         # count the number of ghosts 1-step away
         features["#-of-active-ghosts-1-step-away"] = sum(
-            ((next_x, next_y) in Actions.getLegalNeighbors(g.getPosition(), walls)
-             and g.scaredTimer <= 0)
-            for g in ghost_states)
+            ((next_x, next_y) in Actions.getLegalNeighbors(g, walls))
+            for g in active_ghosts_pos)
 
         features["#-of-scared-ghosts-1-step-away"] = sum(
-            ((next_x, next_y) in Actions.getLegalNeighbors(g.getPosition(), walls)
-             and g.scaredTimer > 0) for g in ghost_states)
+            ((next_x, next_y) in Actions.getLegalNeighbors(g, walls))
+            for g in scared_ghosts_pos)
 
         # count the number of active ghosts 2-steps away
         two_count_active = 0
         for pos in positions_two_steps_away:
             two_count_active += sum(
-                pos in Actions.getLegalNeighbors(g.getPosition(), walls) and g.scaredTimer <= 0 for g in ghost_states)
+                pos in Actions.getLegalNeighbors(g, walls) for g in active_ghosts_pos)
         features["#-of-active-ghosts-2-steps-away"] = two_count_active
 
         # # count the number of scared ghosts 2-steps away
@@ -167,6 +257,20 @@ class NewExtractor(FeatureExtractor):
             # will diverge wildly
             features["closest-food"] = float(dist) / (walls.width * walls.height)
 
+        # distToActiveGhost = closestGhost((next_x, next_y), active_ghosts_pos, walls)
+        # if distToActiveGhost is not None:
+        #     features["closest-active-ghost"] = float(distToActiveGhost)*2 / (walls.width * walls.height)
+
+        if scared_ghosts_pos: 
+            distToClosestScaredGhost = closestGhost((next_x, next_y), scared_ghosts_pos, walls)
+            if distToClosestScaredGhost is not None:
+                features["closest-scared-ghost"] = float(distToClosestScaredGhost)*2 / (walls.width * walls.height)
+
+        if capsules:
+            distToClosestCapsule = closestCapsule((next_x, next_y), capsules, walls)
+            if distToClosestCapsule is not None:
+                features["closest-capsule"] = float(distToClosestCapsule) / (2*(walls.width * walls.height))
+        
         # Normalizing
         features.divideAll(10.0)
 
