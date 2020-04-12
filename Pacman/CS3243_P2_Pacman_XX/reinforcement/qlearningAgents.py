@@ -83,14 +83,19 @@ class QLearningAgent(ReinforcementAgent):
 
         legal_actions = self.getLegalActions(state)
         curr_max = -sys.maxint
-        best_action = legal_actions[0]
+        tied_actions = []
+    
         for a in legal_actions:
             curr_q_value = self.getQValue(state, a)
-            if curr_q_value >= curr_max:
-                curr_max = curr_q_value
-                best_action = a
+            if curr_q_value == curr_max: #add to tied list to break ties randomly later
+                tied_actions.append(a)
 
-        return best_action
+            if curr_q_value > curr_max: #Better Q Value found, reset
+                curr_max = curr_q_value
+                del tied_actions[:] #reset list
+                tied_actions.append(a) #add curr
+
+        return random.choice(tied_actions)
 
     def getAction(self, state):
         """
