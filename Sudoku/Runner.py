@@ -18,7 +18,7 @@ python Runner.py [variant_num]
 """
 
 # File/Directory Variables
-test_dir = "public_tests_p2_sudoku"
+test_dir = "public_tests_p2_sudoku_given"
 root_output_file = "output.out"
 
 solver_file_names = {

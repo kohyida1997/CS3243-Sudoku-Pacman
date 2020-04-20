@@ -10,7 +10,7 @@ Automated Experiment Data Generator
 """
 
 # File/Directory Variables
-test_dir = "public_tests_p2_sudoku"
+test_dir = "public_tests_p2_sudoku_exp"
 root_output_file = "output.out"
 csv_file_name = "./experiments.csv"
 
