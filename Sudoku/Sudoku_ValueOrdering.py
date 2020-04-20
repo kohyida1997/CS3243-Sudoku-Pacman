@@ -234,7 +234,7 @@ class Sudoku(object):
             neighbours = csp.get_neighbours_of_cell(curr_var.position_tuple)
 
             for n in neighbours:
-                if n in self.csp.unassigned_dict:
+                if n in self.csp.unassigned_dict and assignment.assignment_dict[n] == 0:
                     var = self.csp.unassigned_dict[n]
                     if x in var.domain:
                         count += 1
