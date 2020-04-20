@@ -168,6 +168,7 @@ class CSP(object):
         return self.unassigned_dict[cell].neighbours  # list of pos tuples
 
 
+
 class Sudoku(object):
     def __init__(self, puzzle):
         self.puzzle = puzzle  # self.puzzle is a 2D List of Integers.
