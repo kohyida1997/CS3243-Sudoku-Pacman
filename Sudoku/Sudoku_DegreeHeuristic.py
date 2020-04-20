@@ -102,31 +102,13 @@ class Assignment(object):
 
         return True
     
-    def get_degree(self, position_tuple):
-        row_to_check = position_tuple[0]
-        col_to_check = position_tuple[1]
+    def get_degree(self, position_tuple, csp):
+        neighbours = csp.get_neighbours_of_cell(position_tuple)
         degree_count = 0
 
-        # Go through same row as position_tuple
-        for i in range(0, 9):
-            if i != col_to_check:
-                if self.assignment_dict[(row_to_check, i)] == 0:
-                    degree_count += 1
-
-        # Go through same col as position_tuple
-        for j in range(0, 9):
-            if j != row_to_check:
-                if self.assignment_dict[(j, col_to_check)] == 0:
-                    degree_count += 1
-
-        # Go through same 3x3 grid
-        temp = int(row_to_check / 3)
-        temp2 = int(col_to_check / 3)
-        for i in range(temp * 3, (temp + 1) * 3):
-            for j in range(temp2 * 3, (temp2 + 1) * 3):
-                if (i, j) != position_tuple:
-                    if self.assignment_dict[(i, j)] == 0:
-                        degree_count += 1
+        for n in neighbours:
+            if self.assignment_dict[n] == 0:
+                degree_count += 1
 
         return degree_count
 
@@ -185,13 +167,8 @@ class CSP(object):
                         create_arc_neighbour((row, col), current_pos)
 
 
-    """
-    Returns a set of tuples representing the positions of the unassigned cells that have arcs with the given cell.
-    Called by AC-3 Algorithm
-    """
     def get_neighbours_of_cell(self, cell):
-        neighbour_set = list()
-        return neighbour_set
+        return self.unassigned_dict[cell].neighbours #list of pos tuples
 
 
 class Sudoku(object):
@@ -217,8 +194,8 @@ class Sudoku(object):
 
             # Break tie if domain size is the same
             if curr_domain_size == min_domain_size:
-                key_degree = self.assignment.get_degree(key)
-                min_var_degree = self.assignment.get_degree(min_variable_key)
+                key_degree = self.assignment.get_degree(key, self.csp)
+                min_var_degree = self.assignment.get_degree(min_variable_key, self.csp)
                 if key_degree >= min_var_degree:
                     min_variable_key = key
 

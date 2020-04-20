@@ -156,14 +156,8 @@ class CSP(object):
                     if current_pos != (row, col):
                         create_arc_neighbour((row, col), current_pos)
 
-
-    """
-    Returns a set of tuples representing the positions of the unassigned cells that have arcs with the given cell.
-    Called by AC-3 Algorithm
-    """
     def get_neighbours_of_cell(self, cell):
-        neighbour_set = list()
-        return neighbour_set
+        return self.unassigned_dict[cell].neighbours #list of pos tuples
 
 
 class Sudoku(object):
@@ -231,41 +225,25 @@ class Sudoku(object):
 
         self.steps_taken += 1
         curr_var = self.select_unassigned_variable()  # Returns a Variable object
-        del csp.unassigned_dict[curr_var.position_tuple]
 
         # Counting how constraining a certain value is
         def count_collisions(x):
             count = 0
             curr_row, curr_col = curr_var.position_tuple
 
-            # check row
-            for i in range(0, 9):
-                if (curr_row, i) in self.csp.unassigned_dict:
-                    var = self.csp.unassigned_dict[(curr_row, i)]
+            neighbours = csp.get_neighbours_of_cell(curr_var.position_tuple)
+
+            for n in neighbours:
+                if n in self.csp.unassigned_dict:
+                    var = self.csp.unassigned_dict[n]
                     if x in var.domain:
                         count += 1
-
-            # check col
-            for j in range(0, 9):
-                if (j, curr_col) in self.csp.unassigned_dict:
-                    var = self.csp.unassigned_dict[(j, curr_col)]
-                    if x in var.domain:
-                        count += 1
-
-            # check 3x3 grid
-            temp = int(curr_row / 3)
-            temp2 = int(curr_col / 3)
-            for a in range(temp * 3, (temp + 1) * 3):
-                for b in range(temp2 * 3, (temp2 + 1) * 3):
-                    if (a, b) in self.csp.unassigned_dict:
-                        var = self.csp.unassigned_dict[(a, b)]
-                        if x in var.domain:
-                            count += 1
 
             return count
 
         # Creating order for domain values
         ordered_values = sorted(list(curr_var.domain), key=count_collisions)
+        del csp.unassigned_dict[curr_var.position_tuple]
 
         # x is an integer value from domain of curr_var
         for x in ordered_values:  # No ordering established yet for choosing domain values
