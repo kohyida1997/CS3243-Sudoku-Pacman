@@ -7,37 +7,39 @@ import sys, copy, time
 Represents a cell in the Sudoku Space.
 Maintains Domain of the Variable, its current coordiation position
 """
+
+
 class Variable(object):
     def __init__(self, position_tuple):
         self.position_tuple = position_tuple  # position is a tuple (i, j) representing i-j coordinates
         self.domain = set(range(1, 10))  # domain of variable is from 1..9 incl. initially
-        self.neighbours = set() #set of position_tuple(s) that it has arc consistency with (rows/cols/grid)
+        self.neighbours = set()  # set of position_tuple(s) that it has arc consistency with (rows/cols/grid)
 
     # Remove all items in elements_to_remove (a set) from this variable's domain
     def reduce_domain(self, elements_to_remove):
         self.domain = self.domain.difference(elements_to_remove)
-    
-    #remove a value from the domain. Called by AC3
+
+    # remove a value from the domain. Called by AC3
     def remove_from_domain(self, value):
         self.domain.remove(value)
 
-    def add_value_to_domain(self, value) :
+    def add_value_to_domain(self, value):
         self.domain.add(value)
 
     def domain_empty(self):
         return len(self.domain) == 0
-    
+
     def add_neighbours(self, postion_tuple):
         self.neighbours.add(postion_tuple)
 
-    def __lt__(self, other): #override less-than method
+    def __lt__(self, other):  # override less-than method
         return len(self.domain) < len(other.domain)
 
-    def __gt__(self, other): #override greater-than method
+    def __gt__(self, other):  # override greater-than method
         return len(self.domain) > len(other.domain)
 
     def __eq__(self, other):
-        return len(self.domain) == len(other.domain) 
+        return len(self.domain) == len(other.domain)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -45,10 +47,13 @@ class Variable(object):
     def __str__(self):
         return str(self.position_tuple)
 
+
 """
 Assignment represents the state of the current CSP assignment. 
 If number of unassigned variables = 0, it is complete
 """
+
+
 class Assignment(object):
     def __init__(self, list_of_cells):
         self.assignment_dict = dict()  # maps tuple (i, j) to a value.
@@ -96,16 +101,19 @@ class Assignment(object):
         temp2 = int(col_to_check / 3)
         for i in range(temp * 3, (temp + 1) * 3):
             for j in range(temp2 * 3, (temp2 + 1) * 3):
-                if (i, j) != position_tuple:
+                if i != row_to_check and j != col_to_check:
                     if self.assignment_dict[(i, j)] == value:
                         return False
 
         return True
 
+
 """
 Encapsulates all variables that needs to be assigned
 Single Instance only - stored as an attribute in Sudoku Object
 """
+
+
 class CSP(object):
     def __init__(self, list_of_cells):
         self.unassigned_dict = dict()  # maps tuple (i, j) to a Variable object (of corresponding position)
@@ -119,53 +127,53 @@ class CSP(object):
 
     def get_variable(self, position):
         return self.unassigned_dict[position]
-    
+
     """
     Pre-processing Step to add 
     """
+
     def gen_binary_constraints(self):
-        #Create Arcs to add to constraint sets and neighbours to add to Variables
+        # Create Arcs to add to constraint sets and neighbours to add to Variables
         def create_arc_neighbour(current_tuple, neighbour_tuple):
-            #neighbour is also unassigned, hence common arc
-            if neighbour_tuple in self.unassigned_dict: 
-                #add neighbours
+            # neighbour is also unassigned, hence common arc
+            if neighbour_tuple in self.unassigned_dict:
+                # add neighbours
                 curr_var = self.unassigned_dict[current_tuple]
                 neighbour_var = self.unassigned_dict[neighbour_tuple]
                 curr_var.add_neighbours(neighbour_tuple)
                 neighbour_var.add_neighbours(current_tuple)
-                
-        for (row, col) in self.unassigned_dict: #loop through all positions that are unassigned - they will have arcs
-            #Check through row
+
+        for (row, col) in self.unassigned_dict:  # loop through all positions that are unassigned - they will have arcs
+            # Check through row
             for i in range(0, 9):
                 if i != col:
                     current_pos = (row, i)
                     create_arc_neighbour((row, col), current_pos)
-            
-            #Check through columns
+
+            # Check through columns
             for j in range(0, 9):
                 if j != row:
                     current_pos = (j, col)
                     create_arc_neighbour((row, col), current_pos)
 
-            #Check through 3x3 grid
+            # Check through 3x3 grid
             temp = int(row / 3)
             temp2 = int(col / 3)
             for i in range(temp * 3, (temp + 1) * 3):
                 for j in range(temp2 * 3, (temp2 + 1) * 3):
-                    current_pos = (i,j)
-                    if current_pos != (row, col):
-                        create_arc_neighbour((row, col), current_pos)
+                    if i != row and j != col:
+                        create_arc_neighbour((row, col), (i, j))
 
     def get_neighbours_of_cell(self, cell):
-        return self.unassigned_dict[cell].neighbours #list of pos tuples
+        return self.unassigned_dict[cell].neighbours  # list of pos tuples
+
 
 
 class Sudoku(object):
     def __init__(self, puzzle):
         self.puzzle = puzzle  # self.puzzle is a 2D List of Integers.
-        self.ans = copy.deepcopy(puzzle)  # self.ans is a 2D list of Integers. Will be returned to driver method for output
         self.assignment = Assignment(puzzle)  # initialize assignment based on given input
-        self.csp = CSP(puzzle) #
+        self.csp = CSP(puzzle)  #
         self.steps_taken = 0
         self.time_taken = 0
 
@@ -180,8 +188,8 @@ class Sudoku(object):
             if curr_domain_size <= min_domain_size:
                 min_domain_size = curr_domain_size
                 min_variable_key = key
-        
-        #Alternate method to get min_value: Warning: May perform worse, need more research
+
+        # Alternate method to get min_value: Warning: May perform worse, need more research
         # min_variable_key_other = min(self.csp.unassigned_dict, key=self.csp.unassigned_dict.get)
         mrv_variable = self.csp.unassigned_dict[min_variable_key]
         return mrv_variable
@@ -193,6 +201,7 @@ class Sudoku(object):
     will return false.
     Else, will return the set of tuples of positions whose domains have their value removed
     """
+
     def inference(self, csp, var, value):
         failure_flag = False
         set_of_tuples_with_value_removed = set()
@@ -200,9 +209,9 @@ class Sudoku(object):
         for neighbour_position in var.neighbours:
             if failure_flag:
                 break
-            if neighbour_position in csp.unassigned_dict: #prevent loop through those neighbours already deleted
+            if neighbour_position in csp.unassigned_dict:  # prevent loop through those neighbours already deleted
                 neighbour_var = csp.unassigned_dict[neighbour_position]
-                neighbours_domain = neighbour_var.domain #will potentially be reduced
+                neighbours_domain = neighbour_var.domain  # will potentially be reduced
                 if value in neighbours_domain:
                     neighbour_var.remove_from_domain(value)
                     set_of_tuples_with_value_removed.add(neighbour_position)
@@ -234,7 +243,7 @@ class Sudoku(object):
             neighbours = csp.get_neighbours_of_cell(curr_var.position_tuple)
 
             for n in neighbours:
-                if n in self.csp.unassigned_dict:
+                if n in self.csp.unassigned_dict and assignment.assignment_dict[n] == 0:
                     var = self.csp.unassigned_dict[n]
                     if x in var.domain:
                         count += 1
@@ -314,14 +323,17 @@ class Sudoku(object):
         self.csp.gen_binary_constraints()
         # Actual backtracking
         valid_assignment = self.backtrack_search(self.csp)
-        self.time_taken = (time.time() - start_time) * 1000
-        print("Inference + MRV + Value Ordering Variant: Time Taken (in ms) = {0}, Steps = {1}".format(self.time_taken, str(self.steps_taken)))
+
 
         # Writing assignment to self.ans for output
         for (i, j) in valid_assignment.assignment_dict:
-            self.ans[i][j] = valid_assignment.assignment_dict[(i, j)]
+            self.puzzle[i][j] = valid_assignment.assignment_dict[(i, j)]
 
-        return self.ans
+        self.time_taken = (time.time() - start_time) * 1000
+        print("Inference + MRV + Value Ordering Variant: Time Taken (in ms) = {0}, Steps = {1}".format(self.time_taken,
+                                                                                                       str(
+                                                                                                           self.steps_taken)))
+        return self.puzzle
 
 
 if __name__ == "__main__":
