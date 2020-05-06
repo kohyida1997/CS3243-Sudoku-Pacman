@@ -67,6 +67,7 @@ def closestFood(pos, food, walls):
     # no food found
     return None
 
+
 def closest(pos, objectPosList, walls):
     """
     Find the distance (by a legal route) to the closest object. 
@@ -90,21 +91,22 @@ def closest(pos, objectPosList, walls):
 
         if found:
             return dist, foundIndex
-        
+
         # otherwise spread out from the location to its neighbours
         nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
         for nbr_x, nbr_y in nbrs:
             fringe.append((nbr_x, nbr_y, dist + 1))
-    # no ghost found 
+    # no ghost found
     return None, None
+
 
 def getClosestScaredGhostDist(pos, ghostPosList, ghostTimerList, walls):
     """
-    Find the distance (by a legal route) to the closest object. 
+    Find the distance (by a legal route) to the closest object.
     """
     if not ghostPosList:
         return 0, 0
-    
+
     fringe = [(pos[0], pos[1], 0)]
     expanded = set()
     while fringe:
@@ -124,13 +126,14 @@ def getClosestScaredGhostDist(pos, ghostPosList, ghostTimerList, walls):
 
         if found:
             return dist, foundIndex
-        
+
         # otherwise spread out from the location to its neighbours
         nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
         for nbr_x, nbr_y in nbrs:
             fringe.append((nbr_x, nbr_y, dist + 1))
-    # no ghost found 
+    # no ghost found
     return 0, 0
+
 
 def foodManhattanDistance(food_grid, next_pos):
     """
@@ -138,10 +141,11 @@ def foodManhattanDistance(food_grid, next_pos):
     """
     total_MD = 0
     next_x, next_y = next_pos
-    for food in food_grid: #contains pos of food
+    for food in food_grid:  # contains pos of food
         md = abs(food[0] - next_x) + abs(food[1] - next_y)
         total_MD += md
-    return total_MD*10
+    return total_MD * 10
+
 
 class SimpleExtractor(FeatureExtractor):
     """
@@ -192,6 +196,7 @@ class NewExtractor(FeatureExtractor):
     """
     Recursive function that finds all legal neighbours n distance away. Similar to BFS
     """
+
     def getLegalNeighbours(self, frontier_list, walls, n):
         # positions_two_steps_away = Actions.getLegalNeighbors((next_x, next_y), walls)
         if n == 0:
@@ -201,33 +206,33 @@ class NewExtractor(FeatureExtractor):
             for pos in frontier_list:
                 neighbours = Actions.getLegalNeighbors(pos, walls)
                 new_frontier_list.extend(neighbours)
-            return self.getLegalNeighbours(new_frontier_list, walls, n-1)
-    
+            return self.getLegalNeighbours(new_frontier_list, walls, n - 1)
+
     """
     Returns a 2-Element Tuple of ActiveGhostList positions and ScaredGhostList positions
     """
+
     def getGhostPositions(self, ghost_states, ghost_pos):
         active_ghost_pos = []
         scared_ghosts_pos = []
         scared_ghosts_timer = []
-        #record positions of active and scared ghosts
+        # record positions of active and scared ghosts
         for index, state in enumerate(ghost_states):
-            if state.scaredTimer > 0: 
+            if state.scaredTimer > 0:
                 scared_ghosts_pos.append(ghost_pos[index])
                 scared_ghosts_timer.append(state.scaredTimer)
             else:
                 active_ghost_pos.append(ghost_pos[index])
-        
+
         return active_ghost_pos, scared_ghosts_pos, scared_ghosts_timer
 
-
     def getFeatures(self, state, action):
-        #Initialize helper variables
+        # Initialize helper variables
         food = state.getFood()
         walls = state.getWalls()
         capsules = state.getCapsules()
-        
-        #ghosts
+
+        # ghosts
         ghost_states = state.getGhostStates()
         ghosts_pos = state.getGhostPositions()
         active_ghosts_pos, scared_ghosts_pos, scared_ghosts_timer = self.getGhostPositions(ghost_states, ghosts_pos)
@@ -241,7 +246,6 @@ class NewExtractor(FeatureExtractor):
         dx, dy = Actions.directionToVector(action)
         next_x, next_y = int(x + dx), int(y + dy)
 
-
         # count the number of ghosts 1-step away
         features["#-of-active-ghosts-1-step-away"] = sum(
             ((next_x, next_y) in Actions.getLegalNeighbors(g, walls))
@@ -251,15 +255,13 @@ class NewExtractor(FeatureExtractor):
             ((next_x, next_y) in Actions.getLegalNeighbors(g, walls))
             for g in scared_ghosts_pos)
 
-        """
         # count the number of active ghosts 2-steps away
         positions_two_steps_away = Actions.getLegalNeighbors((next_x, next_y), walls)
         two_count_active = 0
         for pos in positions_two_steps_away:
             two_count_active += sum(
-                pos in Actions.getLegalNeighbors(g, walls) for g in active_ghosts_pos)
-        features["#-of-active-ghosts-2-steps-away"] = two_count_active
-        """
+                pos in Actions.getLegalNeighbors(g, walls) for g in scared_ghosts_pos)
+        features["#-of-scared-ghosts-2-steps-away"] = two_count_active
 
         # if there is no danger of ghosts then add the food feature
 
@@ -269,20 +271,22 @@ class NewExtractor(FeatureExtractor):
             # will diverge wildly
             features["closest-food"] = float(dist) / (walls.width * walls.height)
 
-        if not features["#-of-active-ghosts-1-step-away"]: #safe to hunt for food
-            if food[next_x][next_y] and not scared_ghosts_pos: #food in next tile, no scared ghosts to prioritze
-                features["eats-food"] = 1.0 - features["closest-food"] #balancing
+        if not features["#-of-active-ghosts-1-step-away"]:  # safe to hunt for food
+            if food[next_x][next_y] and not scared_ghosts_pos:  # food in next tile, no scared ghosts to prioritze
+                features["eats-food"] = 1.0  # balancing
 
-        if not features["#-of-active-ghosts-1-step-away"]: #not in danger of nearby active ghosts
-            distToClosestScaredGhost, index = getClosestScaredGhostDist((next_x, next_y), scared_ghosts_pos, scared_ghosts_timer,walls)
-            features["closest-scared-ghost"] = 1.0 - (float(distToClosestScaredGhost) / (walls.width * walls.height))
+        if not features["#-of-active-ghosts-1-step-away"]:  # not in danger of nearby active ghosts
+            distToClosestScaredGhost, index = getClosestScaredGhostDist((next_x, next_y), scared_ghosts_pos,
+                                                                        scared_ghosts_timer, walls)
+            features["closest-scared-ghost"] =  (float(distToClosestScaredGhost) / (walls.width * walls.height))
 
-        if not scared_ghosts_pos: #only look for capsules if there are no scared ghosts
+        if not scared_ghosts_pos:  # only look for capsules if there are no scared ghosts
             distToClosestCapsule, index = closest((next_x, next_y), capsules, walls)
             if distToClosestCapsule is not None:
                 features["closest-capsule"] = float(distToClosestCapsule) / (walls.width * walls.height)
 
-        features["food-md"] = foodManhattanDistance(food.asList(), (next_x, next_y)) / ((walls.width * walls.height) * (walls.width + walls.height))
+        # features["food-md"] = foodManhattanDistance(food.asList(), (next_x, next_y)) / (
+        #             (walls.width * walls.height) * (walls.width + walls.height))
         # Normalizing
 
         features.divideAll(10.0)

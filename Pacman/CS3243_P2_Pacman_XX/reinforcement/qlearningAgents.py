@@ -217,8 +217,13 @@ class ApproximateQAgent(PacmanQAgent):
         # call the super-class final method
         PacmanQAgent.final(self, state)
 
+        features_to_check = ["#-of-scared-ghosts-1-step-away",  "#-of-active-ghosts-1-step-away",
+                             "#-of-scared-ghosts-2-steps-away", "eats-food", "closest-scared-ghost", "closest-capsule", "closest-food"]
+
+        string_to_print = ""
         # did we finish training?
-        if self.episodesSoFar == self.numTraining:
-            # you might want to print your weights here for debugging
-            "*** YOUR CODE HERE ***"
+        if self.episodesSoFar <= self.numTraining:
+            for key in features_to_check:
+                string_to_print += key[5:] + "--> " + str(self.weights[key]) + "\n"
+            print(string_to_print)
             pass
