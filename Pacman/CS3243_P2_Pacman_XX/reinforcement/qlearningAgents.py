@@ -218,7 +218,8 @@ class ApproximateQAgent(PacmanQAgent):
         PacmanQAgent.final(self, state)
 
         features_to_check = ["#-of-scared-ghosts-1-step-away",  "#-of-active-ghosts-1-step-away",
-                             "#-of-scared-ghosts-2-steps-away", "eats-food", "closest-scared-ghost", "closest-capsule", "closest-food"]
+                             "#-of-scared-ghosts-2-steps-away", "eats-food", "closest-scared-ghost", "closest-capsule",
+                             "closest-food", "#-of-scared-ghosts-2-steps-away", "eats-capsule"]
 
         string_to_print = ""
         # did we finish training?

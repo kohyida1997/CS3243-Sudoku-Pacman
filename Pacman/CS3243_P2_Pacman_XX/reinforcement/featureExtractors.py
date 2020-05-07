@@ -119,7 +119,7 @@ def getClosestScaredGhostDist(pos, ghostPosList, ghostTimerList, walls):
         found = False
         foundIndex = -1
         for index, p in enumerate(ghostPosList):
-            if p == (pos_x, pos_y) and ghostTimerList[index] > dist:
+            if p == (pos_x, pos_y):
                 found = True
                 foundIndex = index
                 break
@@ -255,13 +255,26 @@ class NewExtractor(FeatureExtractor):
             ((next_x, next_y) in Actions.getLegalNeighbors(g, walls))
             for g in scared_ghosts_pos)
 
-        # count the number of active ghosts 2-steps away
-        positions_two_steps_away = Actions.getLegalNeighbors((next_x, next_y), walls)
-        two_count_active = 0
-        for pos in positions_two_steps_away:
-            two_count_active += sum(
-                pos in Actions.getLegalNeighbors(g, walls) for g in scared_ghosts_pos)
-        features["#-of-scared-ghosts-2-steps-away"] = two_count_active
+
+
+        if not features["#-of-scared-ghosts-1-step-away"] and not features["#-of-active-ghosts-1-step-away"]:
+            # count the number of active ghosts 2-steps away
+            positions_two_steps_away = Actions.getLegalNeighbors((next_x, next_y), walls)
+
+            glob_set = set()
+            for g in scared_ghosts_pos:
+               two_pos_away = set()
+               for pos in Actions.getLegalNeighbors(g, walls):
+                    for pos_2 in Actions.getLegalNeighbors(pos, walls):
+                     two_pos_away.add(pos_2)
+               for e in two_pos_away:
+                   glob_set.add(e)
+
+            two_count_active = 0
+            for pos in positions_two_steps_away:
+                if pos in glob_set:
+                    two_count_active += 1
+            features["#-of-scared-ghosts-2-steps-away"] = two_count_active
 
         # if there is no danger of ghosts then add the food feature
 
@@ -272,13 +285,16 @@ class NewExtractor(FeatureExtractor):
             features["closest-food"] = float(dist) / (walls.width * walls.height)
 
         if not features["#-of-active-ghosts-1-step-away"]:  # safe to hunt for food
-            if food[next_x][next_y] and not scared_ghosts_pos:  # food in next tile, no scared ghosts to prioritze
-                features["eats-food"] = 1.0  # balancing
+            if food[next_x][next_y] and ((next_x, next_y) not in scared_ghosts_pos):  # food in next tile, no scared ghosts to prioritze
+                features["eats-food"] = 1.0 - features["closest-food"]
+            if (next_x, next_y) in capsules and not scared_ghosts_pos:
+                features["eats-capsule"] = 1.0
 
-        if not features["#-of-active-ghosts-1-step-away"]:  # not in danger of nearby active ghosts
+        if not features["#-of-active-ghosts-1-step-away"] and len(scared_ghosts_pos) > 0:  # not in danger of nearby active ghosts
             distToClosestScaredGhost, index = getClosestScaredGhostDist((next_x, next_y), scared_ghosts_pos,
                                                                         scared_ghosts_timer, walls)
-            features["closest-scared-ghost"] =  (float(distToClosestScaredGhost) / (walls.width * walls.height))
+            features["closest-scared-ghost"] = 1.0 - (float(distToClosestScaredGhost) / (walls.width * walls.height))
+
 
         if not scared_ghosts_pos:  # only look for capsules if there are no scared ghosts
             distToClosestCapsule, index = closest((next_x, next_y), capsules, walls)
