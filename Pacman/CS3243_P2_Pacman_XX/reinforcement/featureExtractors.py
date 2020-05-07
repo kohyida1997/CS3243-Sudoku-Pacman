@@ -119,7 +119,7 @@ def getClosestScaredGhostDist(pos, ghostPosList, ghostTimerList, walls):
         found = False
         foundIndex = -1
         for index, p in enumerate(ghostPosList):
-            if p == (pos_x, pos_y):
+            if p == (pos_x, pos_y) and ghostTimerList[index] > dist:
                 found = True
                 foundIndex = index
                 break
